@@ -17,6 +17,55 @@ const int Height = 800;
 const int Width  = 800;
 const char *fileName = "obj/african_head.obj";
 
+/*
+// Old-school method: Line sweeping：
+void triangle(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage &image, TGAColor color) { 
+    if (t0.y==t1.y && t0.y==t2.y) return;
+    // sort the vertices, t0, t1, t2 lower−to−upper (bubblesort yay!) 
+    if (t0.y>t1.y) std::swap(t0, t1); 
+    if (t0.y>t2.y) std::swap(t0, t2); 
+    if (t1.y>t2.y) std::swap(t1, t2); 
+    int total_height = t2.y-t0.y; 
+    // for (int y=t0.y; y<=t1.y; y++) { 
+    //     int segment_height = t1.y-t0.y+1; 
+    //     float alpha = (float)(y-t0.y)/total_height; 
+    //     float beta  = (float)(y-t0.y)/segment_height; // be careful with divisions by zero 
+    //     Vec2i A = t0 + (t2-t0)*alpha; 
+    //     Vec2i B = t0 + (t1-t0)*beta; 
+    //     if (A.x>B.x) std::swap(A, B); 
+    //     for (int j=A.x; j<=B.x; j++) { 
+    //         image.set(j, y, color); // attention, due to int casts t0.y+i != A.y 
+    //     } 
+    // } 
+    // for (int y=t1.y; y<=t2.y; y++) { 
+    //     int segment_height =  t2.y-t1.y+1; 
+    //     float alpha = (float)(y-t0.y)/total_height; 
+    //     float beta  = (float)(y-t1.y)/segment_height; // be careful with divisions by zero 
+    //     Vec2i A = t0 + (t2-t0)*alpha; 
+    //     Vec2i B = t1 + (t2-t1)*beta; 
+    //     if (A.x>B.x) std::swap(A, B); 
+    //     for (int j=A.x; j<=B.x; j++) { 
+    //         image.set(j, y, color); // attention, due to int casts t0.y+i != A.y 
+    //     } 
+    // }
+
+    //整合一下，用一个for loop一起画
+    for(int y = t0.y; y < t2.y; y++){
+        bool second_half = y > t1.y || (t1.y == t0.y);
+        int segment_height = second_half ? t2.y-t1.y : t1.y-t0.y;
+        float alpha = (float)(y - t0.y)/total_height;
+        float beta  = (float)(y-(second_half ? t1.y : t0.y))/segment_height;
+        Vec2i A = t0 + (t2 - t0) * alpha;
+        Vec2i B = second_half ? t1 + (t2 - t1) * beta : t0 + (t1 - t0) * beta;
+
+        if(A.x > B.x)   swap(A, B);
+        for(int j = A.x; j <= B.x; j++){
+            image.set(j, y, color);
+        }
+    } 
+}
+*/
+
 //new method: 用 barycentric画:
 // barycentric会用重心坐标判断点P是否在由pts0,pts1,pts2三个顶点组成的三角形内，如果是就返回true，否则返回false
 bool barycentric(Vec2i *pts, Vec2i P){
@@ -63,6 +112,22 @@ void triangle(Vec2i *pts, TGAImage &image, TGAColor color){
 }
 
 int main(int argc, char** argv){
+    //lesson 2
+    // old way画三角形
+    //定义三个三角形
+    // Vec2i t0[3] = {Vec2i(10, 70),   Vec2i(50, 160),  Vec2i(70, 80)}; 
+    // Vec2i t1[3] = {Vec2i(180, 50),  Vec2i(150, 1),   Vec2i(70, 180)}; 
+    // Vec2i t2[3] = {Vec2i(180, 150), Vec2i(120, 160), Vec2i(130, 180)}; 
+    //画出三个三角形
+    // triangle(t0[0], t0[1], t0[2], image, red); 
+    // triangle(t1[0], t1[1], t1[2], image, white); 
+    // triangle(t2[0], t2[1], t2[2], image, green);
+    
+    //barycentric画三角形
+    // TGAImage image(200, 200, TGAImage::RGB);
+    // Vec2i pts[3] = {Vec2i(10,10), Vec2i(100, 30), Vec2i(190, 160)}; //画出这个三角形
+    // triangle(pts, image, TGAColor(255, 0, 0, 255));
+
     //flat shader + simple shadow
     TGAImage image(Width, Height, TGAImage::RGB);
     if(argc == 2)
