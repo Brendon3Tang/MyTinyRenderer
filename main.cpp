@@ -152,7 +152,7 @@ bool barycentric(Vec2i *pts, Vec2i P){
 
     float lambda = 1.0f - alpha - beta;
 
-    if(alpha >= 0.0f && beta >= 0.f && lambda >= 0.f && alpha <= 1.0f && beta <= 1.f && lambda <= 1.f) 
+    if(alpha >= 0.0f && beta >= 0.f && lambda >= 0.f) 
         return true;
 
     return false;
