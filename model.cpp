@@ -1,58 +1,3 @@
-// #include <iostream>
-// #include <string>
-// #include <fstream>
-// #include <sstream>
-// #include <vector>
-// #include "model.h"
-
-// Model::Model(const char *filename) : verts_(), faces_() {
-//     std::ifstream in;
-//     in.open (filename, std::ifstream::in);
-//     if (in.fail()) return;
-//     std::string line;
-//     while (!in.eof()) {
-//         std::getline(in, line);
-//         std::istringstream iss(line.c_str());
-//         char trash;
-//         if (!line.compare(0, 2, "v ")) {
-//             iss >> trash;
-//             Vec3f v;
-//             for (int i=0;i<3;i++) iss >> v[i];
-//             verts_.push_back(v);
-//         } else if (!line.compare(0, 2, "f ")) {
-//             std::vector<int> f;
-//             int itrash, idx;
-//             iss >> trash;
-//             while (iss >> idx >> trash >> itrash >> trash >> itrash) {
-//                 idx--; // in wavefront obj all indices start at 1, not zero
-//                 f.push_back(idx);
-//             }
-//             faces_.push_back(f);
-//         }
-//     }
-//     std::cerr << "# v# " << verts_.size() << " f# "  << faces_.size() << std::endl;
-// }
-
-// Model::~Model() {
-// }
-
-// int Model::nverts() {
-//     return (int)verts_.size();
-// }
-
-// int Model::nfaces() {
-//     return (int)faces_.size();
-// }
-
-// std::vector<int> Model::face(int idx) {
-//     return faces_[idx];
-// }
-
-// Vec3f Model::vert(int i) {
-//     return verts_[i];
-// }
-
-
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -91,11 +36,11 @@ Model::Model(const char *filename) : verts_(), faces_(), norms_(), uv_() {
             std::vector<Vec3i> f;
             Vec3i tmp;
             iss >> trash;   //先把'f'放入trash
-            while (iss >> tmp[0] >> trash >> tmp[1] >> trash >> tmp[2]) {//对于f:283/266/283，把数字放入tmp，把'/'放入trash
+            while (iss >> tmp[0] >> trash >> tmp[1] >> trash >> tmp[2]) {//对于f:283/266/283，把三个数字放入tmp[i]，把' '放入trash
                 for (int i=0; i<3; i++) tmp[i]--; // in wavefront obj all indices start at 1, not zero
-                f.push_back(tmp);
+                f.push_back(tmp);   //一个顶点的3个数据(v/vt/vn)组成了一个tmp， 3个tmp（3个顶点）组成了一个f（实际上f就是一个face）
             }
-            faces_.push_back(f);
+            faces_.push_back(f);    //i个f(单个face)组成了一个faces（实际上face是一个face群）
         }
     }
     std::cerr << "# v# " << verts_.size() << " f# "  << faces_.size() << " vt# " << uv_.size() << " vn# " << norms_.size() << std::endl;
@@ -126,19 +71,20 @@ Vec3f Model::vert(int i) {
 void Model::load_texture(std::string filename, const char *suffix, TGAImage &img) {
     std::string texfile(filename);
     size_t dot = texfile.find_last_of(".");
-    if (dot!=std::string::npos) {
-        texfile = texfile.substr(0,dot) + std::string(suffix);
+    if (dot!=std::string::npos) {//npos表示最大size_t，常用于find找不到时返回的值。这里（texfile.find_last_of(".") != nops）表示文件存在。
+        texfile = texfile.substr(0,dot) + std::string(suffix);//把"../african_head.obj"变成"../african_head_diffuse.tga"
         std::cerr << "texture file " << texfile << " loading " << (img.read_tga_file(texfile.c_str()) ? "ok" : "failed") << std::endl;
         img.flip_vertically();
     }
 }
 
 TGAColor Model::diffuse(Vec2i uv) {
-    return diffusemap_.get(uv.x, uv.y);
+    return diffusemap_.get(uv.x, uv.y); //diffusemap_就是有纹理图的TGAImage。得到纹理图中(u,v)点的颜色数据并返回
 }
 
+// uv(int iface, int nvert)会对于当前face的当前vertex
 Vec2i Model::uv(int iface, int nvert) {
-    int idx = faces_[iface][nvert][1];
+    int idx = faces_[iface][nvert][1];  //取得当前face中当前vertex的纹理坐标的索引值(v/vt/vn中的vt，所以index是1)
     return Vec2i(uv_[idx].x*diffusemap_.get_width(), uv_[idx].y*diffusemap_.get_height());
 }
 
