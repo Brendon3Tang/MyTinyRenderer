@@ -4,7 +4,7 @@
 
 ## Lesson 2
 
-## Lesson 3
+## Lesson 3 Z-Buffer & Texture Mapping
 ### 课程总结：
 1. 为三角形的光栅化增加深度测试，做出阴影，具体步骤，在triangle函数中：
    1. 创建zBuffer缓存，用于存储物体的z值，z值越大，表示物体离camera的距离越近。
@@ -14,7 +14,7 @@
    2. 调用model中的函数load_texture，把texture加载到一个TGAImage中作为贴图
    3. 根据obj中的索引(f的信息)，得到当前face的当前vertex的纹理坐标的索引值(faces[nface][nvertex][1])，然后根据索引找到纹理坐标，完成了纹理映射
    4. 使用坐标(u,v)取得纹理贴图中该点的颜色数据，并作为color给三角形上色
-3. moddel文件中新增了：
+3. model文件中新增了：
    1. 变量：
       1. std::vector<Vec2f> uv_; 
       2. TGAImage diffusemap_; 
@@ -61,5 +61,10 @@ for(int k = 0; k < 3; k++){
   uvP.y += uv[k].y * baryCentricCoord[k]; // 插值后P的纹理坐标y同理
 }
 ```
-1. 如何读取obj文件？
+6. 如何读取obj文件？
    - 参考model.cpp里的文件读取函数的注释
+
+## Lesson 4 Perspective Projection
+### 课程要点：
+1. We know that diagonal coefficients of the matrix scale our world along the coordinate axes
+2. Homogeneous coordinates方便了人们用单个矩阵同时表示物体的scaling，rotating，还有translating
