@@ -68,3 +68,84 @@ for(int k = 0; k < 3; k++){
 ### 课程要点：
 1. We know that diagonal coefficients of the matrix scale our world along the coordinate axes
 2. Homogeneous coordinates方便了人们用单个矩阵同时表示物体的scaling，rotating，还有translating
+3. In homogeneous coordinates all things with z=0 are vectors, all the rest are points。在齐次坐标系里，z = 0的是向量，其他的是点。
+4. 方法一：求Perspective Projection的matrix（**与大部分的定义不同，摄像机的位置在(0,0,c)**）：
+   1. 先看一个矩阵乘法，用齐次坐标系，我们用矩阵 M 把任意一个点 K: $(x, y, z)$变换到点 K': $(\frac{x}{rz+1}, \frac{y}{rz+1},\frac{z}{rz+1}) $: 
+   \
+   $\begin{bmatrix}
+      1 & 0 & 0 & 0\\
+      0 & 1 & 0 & 0\\
+      0 & 0 & 1 & 0\\
+      0 & 0 & r & 1\\
+   \end{bmatrix} * 
+   \begin{bmatrix}
+      x\\
+      y\\
+      z\\
+      1\\
+   \end{bmatrix} = 
+   \begin{bmatrix}
+      x\\
+      y\\
+      z\\
+      rz + 1\\
+   \end{bmatrix}$
+   \
+   经过变换后：得到结果点K'
+   \
+   $\begin{bmatrix}
+      x\\
+      y\\
+      z\\
+      rz + 1\\
+   \end{bmatrix} = 
+   \begin{bmatrix}
+      \frac{x}{rz+1}\\
+      \frac{y}{rz+1}\\
+      \frac{z}{rz+1}
+   \end{bmatrix}$  
+   <br/>
+   2. 然后看下图中的三角形：
+    ![image from the repo lesson 5](LESSON/img/PerspectiveProjection.png)
+      1. $\bigtriangleup ABC$与$\bigtriangleup ODC$是相似三角形:
+         - $(\frac{|AB|}{|AC|} = \frac{|OD|}{|OC|}) \Rightarrow (\frac{x}{c-z} = \frac{x'}{c}) \Rightarrow (x' = \frac{x}{1- \frac{z}{c}})$
+      2. 同理可得：$ y' = \frac{y}{1 - \frac{z}{c}}$
+      3. 最终结果得到一个点P'为 $
+         \begin{bmatrix}
+         \frac{x}{1- \frac{z}{c}}\\
+         \frac{y}{1 - \frac{z}{c}}\\
+         \frac{z}{1 - \frac{z}{c}} = 0
+      \end{bmatrix}$。
+      当$r = -\frac{1}{c}$时，K' = $ \begin{bmatrix}
+         \frac{x}{1- \frac{z}{c}}\\
+         \frac{y}{1 - \frac{z}{c}}\\
+         \frac{z}{1 - \frac{z}{c}} 
+      \end{bmatrix}$。由此得出，当我们把 $r = -\frac{1}{c}$ 带入矩阵M，可以得到Perspective Projection 矩阵：$\begin{bmatrix}
+      1 & 0 & 0 & 0\\
+      0 & 1 & 0 & 0\\
+      0 & 0 & 1 & 0\\
+      0 & 0 & -\frac{1}{c} & 1\\
+   \end{bmatrix}$。该矩阵可以把任意点(x,y,z)投射到平面z = 0上。我们只需要用x', y'就可以得到物品在平面上的位置，z'可以用了完成z-buffer。
+   4. 此种方法由于camera在(0,0,c)上，因此在求ModelView矩阵时，我们要使用的矩阵是：$\begin{bmatrix}
+      x[0] & x[1] & x[2] & 0\\
+      y[0] & y[1] & y[2] & 0\\
+      z[0] & z[1] & z[2] & 0\\
+      -target[0] & -target[1] & -target[2] & 1\\
+   \end{bmatrix}$
+5. 方法二：求Perspective Projection的matrix。（**大部分的定义方式，摄像机的位置在原点(0,0,0)**）：
+   1. 使用以下投影矩阵：
+   ![formula](LESSON/img/PerspectiveProjectionFormula.png)
+   [求投影矩阵函数来源戳这里<----------](https://stackoverflow.com/questions/18404890/how-to-build-perspective-projection-matrix-no-api)
+   2. 根据[Learn WebGL](http://learnwebgl.brown37.net/08_projections/projections_perspective.html)可知：
+      1. aspect是Width/Height。
+      2. fovy一般取区间[30,60]度，fovy在放入tan()函数中计算时要变成rad，假设degree = 30度：fovy_rad = 30.f * M_PI/180.f。
+      3. fovy越大，物品看起来越远，fovy越小，物品看起来越大
+      4. 经典的near和far取值范围是[0.1, 100]。
+      5. 示例中，aspect = 1， fovy = 45度， near = 10， far = 20
+   3.  此种方法由于camera在(0,0,0)上，因此在求ModelView矩阵时，我们要使用的矩阵是**M的逆矩阵**：$M = \begin{bmatrix}
+      x[0] & y[0] & z[0] & eye[0]\\
+      x[1] & y[1] & z[1] & eye[1]\\
+      x[2] & y[2] & z[2] & eye[2]\\
+      0 & 0 & 0 & 1\\
+   \end{bmatrix}$,我们返回$M.inverse()$
+      
