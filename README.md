@@ -1,4 +1,4 @@
-# TinyRenderer 项目学习笔记：
+# TinyRenderer 项目学习笔记(Open in a Markdown reader)：
 ## Lesson 1
 1. 使用重心坐标公式得不出需要的结果：没有注意int与float直接的互换。输入的三角形点坐标是int，但是重心坐标是float。
 
@@ -71,8 +71,8 @@ for(int k = 0; k < 3; k++){
 3. In homogeneous coordinates all things with z=0 are vectors, all the rest are points。在齐次坐标系里，z = 0的是向量，其他的是点。
 4. 方法一：求Perspective Projection的matrix（**与大部分的定义不同，摄像机的位置在(0,0,c)**）：
    1. 先看一个矩阵乘法，用齐次坐标系，我们用矩阵 M 把任意一个点 K: $(x, y, z)$变换到点 K': $(\frac{x}{rz+1}, \frac{y}{rz+1},\frac{z}{rz+1}) $: 
-   ``` math
-   \begin{bmatrix}
+   \
+   $\begin{bmatrix}
       1 & 0 & 0 & 0\\
       0 & 1 & 0 & 0\\
       0 & 0 & 1 & 0\\
@@ -89,13 +89,11 @@ for(int k = 0; k < 3; k++){
       y\\
       z\\
       rz + 1\\
-   \end{bmatrix}
-   ``` 
-   
+   \end{bmatrix}$
+   \
    经过变换后：得到结果点K'
-   <br/>
-   ```math
-   \begin{bmatrix}
+   \
+   $\begin{bmatrix}
       x\\
       y\\
       z\\
@@ -105,9 +103,8 @@ for(int k = 0; k < 3; k++){
       \frac{x}{rz+1}\\
       \frac{y}{rz+1}\\
       \frac{z}{rz+1}
-   \end{bmatrix}
-   ```
-   
+   \end{bmatrix}$  
+   <br/>
    2. 然后看下图中的三角形：
     ![image from the repo lesson 5](LESSON/img/PerspectiveProjection.png)
       1. $\bigtriangleup ABC$与$\bigtriangleup ODC$是相似三角形:
@@ -138,7 +135,7 @@ for(int k = 0; k < 3; k++){
 5. 方法二：求Perspective Projection的matrix。（**大部分的定义方式，摄像机的位置在原点(0,0,0)**）：
    1. 使用以下投影矩阵([推导过程在这里](https://zhuanlan.zhihu.com/p/104039832))：
    ![formula](LESSON/img/PerspectiveProjectionFormula.png)
-   [投影矩阵函数的code来源戳这里<----------](https://stackoverflow.com/questions/18404890/how-to-build-perspective-projection-matrix-no-api)
+   [投影矩阵函数来源戳这里<----------](https://stackoverflow.com/questions/18404890/how-to-build-perspective-projection-matrix-no-api)
    2. 根据[Learn WebGL](http://learnwebgl.brown37.net/08_projections/projections_perspective.html)可知：
       1. aspect是Width/Height。
       2. fovy一般取区间[30,60]度，fovy在放入tan()函数中计算时要变成rad，假设degree = 30度：fovy_rad = 30.f * M_PI/180.f。
