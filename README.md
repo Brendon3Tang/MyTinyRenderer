@@ -71,7 +71,7 @@ for(int k = 0; k < 3; k++){
 3. In homogeneous coordinates all things with z=0 are vectors, all the rest are points。在齐次坐标系里，z = 0的是向量，其他的是点。
 4. 方法一：求Perspective Projection的matrix（**与大部分的定义不同，摄像机的位置在(0,0,c)**）：
    1. 先看一个矩阵乘法，用齐次坐标系，我们用矩阵 M 把任意一个点 K: $(x, y, z)$变换到点 K': $(\frac{x}{rz+1}, \frac{y}{rz+1},\frac{z}{rz+1}) $: 
-   \
+   
    $\begin{bmatrix}
       1 & 0 & 0 & 0\\
       0 & 1 & 0 & 0\\
@@ -90,7 +90,7 @@ for(int k = 0; k < 3; k++){
       z\\
       rz + 1\\
    \end{bmatrix}$
-   \
+   
    经过变换后：得到结果点K'
    \
    $\begin{bmatrix}
