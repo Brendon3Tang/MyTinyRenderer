@@ -133,9 +133,9 @@ for(int k = 0; k < 3; k++){
       -target[0] & -target[1] & -target[2] & 1\\
    \end{bmatrix}$
 5. 方法二：求Perspective Projection的matrix。（**大部分的定义方式，摄像机的位置在原点(0,0,0)**）：
-   1. 使用以下投影矩阵：
+   1. 使用以下投影矩阵([推导过程在这里](https://zhuanlan.zhihu.com/p/104039832))：
    ![formula](LESSON/img/PerspectiveProjectionFormula.png)
-   [求投影矩阵函数来源戳这里<----------](https://stackoverflow.com/questions/18404890/how-to-build-perspective-projection-matrix-no-api)
+   [投影矩阵函数的code来源戳这里<----------](https://stackoverflow.com/questions/18404890/how-to-build-perspective-projection-matrix-no-api)
    2. 根据[Learn WebGL](http://learnwebgl.brown37.net/08_projections/projections_perspective.html)可知：
       1. aspect是Width/Height。
       2. fovy一般取区间[30,60]度，fovy在放入tan()函数中计算时要变成rad，假设degree = 30度：fovy_rad = 30.f * M_PI/180.f。
