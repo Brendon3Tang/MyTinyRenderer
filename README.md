@@ -65,7 +65,7 @@ for(int k = 0; k < 3; k++){
    - 参考model.cpp里的文件读取函数的注释
 
 ## Lesson 4 Perspective Projection
-### 课程要点：
+### 主要内容：
 1. We know that diagonal coefficients of the matrix scale our world along the coordinate axes
 2. Homogeneous coordinates方便了人们用单个矩阵同时表示物体的scaling，rotating，还有translating
 3. In homogeneous coordinates all things with z=0 are vectors, all the rest are points。在齐次坐标系里，z = 0的是向量，其他的是点。
@@ -148,4 +148,8 @@ for(int k = 0; k < 3; k++){
       x[2] & y[2] & z[2] & eye[2]\\
       0 & 0 & 0 & 1\\
    \end{bmatrix}$,我们返回$M.inverse()$
-      
+
+## Lesson 5 Moving the camera
+### 主要内容：
+1. 计算ModelView变换矩阵
+2. 计算ViewPort变换矩阵

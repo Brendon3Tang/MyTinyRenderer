@@ -187,16 +187,16 @@ int main(int argc, char** argv){
     }
 
     //draw the model 用项目的方法
-    // Matrix ModelView = lookat(eye, center, Vec3f(0, 1, 0));
-    // Matrix ViewPort = viewport(Width/8, Height/8, Width*3/4, Height*3/4);
-    // Matrix Projection = Matrix::identity(4);
-    // Projection[3][2] = -1.f/(eye-center).norm();
+    Matrix ModelView = lookat(eye, center, Vec3f(0, 1, 0));
+    Matrix ViewPort = viewport(Width/8, Height/8, Width*3/4, Height*3/4);
+    Matrix Projection = Matrix::identity(4);
+    Projection[3][2] = -1.f/(eye-center).norm();
     
     //用我的方法
-    Matrix ModelView = getModelView(eye, center, Vec3f(0, 1, 0));
-    Matrix ViewPort = viewport(Width, Height);
-    float fovyRad = 40.f * M_PI/180.f;
-    Matrix Projection = getProjection(fovyRad, Width/Height, 1.0f, 10.0f, true);
+    // Matrix ModelView = getModelView(eye, center, Vec3f(0, 1, 0));
+    // Matrix ViewPort = viewport(Width, Height);
+    // float fovyRad = 40.f * M_PI/180.f;
+    // Matrix Projection = getProjection(fovyRad, Width/Height, 1.0f, 10.0f, true);
     
     //遍历所有的面，每个face都是一个三角形，有三个顶点vertex，每个vertex有(x,y,z)三个坐标
     for(int i = 0; i < model->nfaces(); i++){
@@ -225,7 +225,7 @@ int main(int argc, char** argv){
     }
 
     image.flip_vertically(); // i want to have the origin at the left bottom corner of the image
-    image.write_tga_file("L5_outputTexture2.tga");
+    image.write_tga_file("./output/L5_outputTexture1.tga");
 
 
     TGAImage zbimage(Width, Height, TGAImage::GRAYSCALE);
@@ -235,7 +235,7 @@ int main(int argc, char** argv){
         }
     }
     zbimage.flip_vertically(); // i want to have the origin at the left bottom corner of the image
-    zbimage.write_tga_file("L5_zbuffer2.tga");
+    zbimage.write_tga_file("./output/L5_zbuffer1.tga");
     delete model;
     delete []zbuffer;
     return 0;
