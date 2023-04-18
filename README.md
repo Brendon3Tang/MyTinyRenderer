@@ -168,26 +168,47 @@ for(int k = 0; k < 3; k++){
 
 ## Lesson 6: Shaders for the software renderer
 ### 主要内容：
-1. 完善项目构架：
-   1. vertex shader
-      1. 用于取得顶点坐标，并转化为screenCoords
-      2. 用于取得每个顶点的intensity、对应的纹理坐标(u,v)
-   2. fragment shader
-      1. 用于处理插值（得到 P点对应的纹理坐标(u,v)的intensity，纹理坐标），并取得颜色数据
-2. 学习渲染管线
-3. 跳过了Phong Shading
-4. Normal Mapping：
-   1. **normal texture是五颜六色的，因为每个位置点P(u,v)的RGB值(r, g, b)用来表示这个点P的normal的(x, y, z)。**
-   2. Normal Mapping不再需要为intensity插值了，而是直接得到每个pixel的normal vector，然后把它和light均仿射变换（affine mapping）后求出放射变换后的intensity，他即使该纹理坐标(u,v)的intensity
-   3. global (Cartesian) coordinate system VS. Darboux frame (so-called tangent space)（6bis中学习）
-   4. normal mapping需要用到**Transformation of normal vectors**：
+1.  学习Normal Mapping：
+    1. **normal texture法线贴图是五颜六色的，因为每个位置点P(u,v)的RGB值(r, g, b)用来表示这个点P的normal的(x, y, z)。**
+    2. Normal Mapping不再需要为intensity插值了，而是直接得到每个pixel的normal vector，然后把它和light均仿射变换（affine mapping）后求出放射变换后的intensity，他即使该纹理坐标(u,v)的intensity。注意使用矩阵 M 变换light， 矩阵 $(M^{-1})^{T}$ 变换 normal vector。
+      1. M = Projection * ModelView
+    3. normal mapping需要用到**Transformation of normal vectors**：
       - 如果一个模型和他的法线都被定义在了obj file里，当我们需要用affine mapping来变换这个obj时，假设我们使用的是矩阵 M ，那么要变换这个obj的法线，我们需要使用的矩阵是$(M^{-1})^{T}$，即 M.inverse.transpose。
+    4. global (Cartesian) coordinate system VS. Darboux frame (so-called tangent space)（6bis中学习）
+2. 完善项目构架：
+   1. For Gouraud Shading：
+      1. vertex shader
+         1. 用于取得顶点坐标，并转化为screenCoords
+         2. 用于取得每个顶点的intensity、
+         3. 用于取得每个顶点对应的纹理坐标(u,v)
+      2. fragment shader
+         1. 用于处理插值（得到P点的插值后的intensity，插值后的纹理坐标），并取得颜色数据
+   2. For Normal Mapping：
+      1. vertex shader：
+         1. 用于取得顶点坐标，并转化为screenCoords
+         2. 用于取得每个顶点对应的纹理坐标(u,v)
+      2. fragment shader：
+         1. 用于处理插值
+            1. 得到P点插值后的纹理坐标（uP, vP), 然后把normal map（法线贴图）中（uP, vP)位置的（r,g,b)数据返回得到Original法线n_original。然后用 M.inverse.transpose仿射变换把n_original变成n（记得normalize）
+            2. 用 M 把light_original变成light（记得normalize）
+            3.  intensity/diffuse = max(0, n * l);
+3. **intensity就是diffuse！！！！**
+4. 学习Blinn Phong Reflection Model：
+   1. diffuse = intensity = coefficients（即$\frac{intensity}{r^2}$） * max (0, n * l)。当coe = 1时，光线全部漫反射出去
+   2. 直接用specular贴图得到specular的power的值, power = model->specular(uv)：然后用r计算specular：
+      - 公式一 （Phong）： specular= coefficients, (即 $\frac{intensity}{r^2}$) * $(max(0, v * r))^p$。其中$ r = 2(n * l) - l$, n, l 均是normal vector， p一般选100～200(此处我们用specular map得到p)
+      - 公式二（Blinn-Phong）：specular = coefficients (即 $\frac{intensity}{r^2}$) * $(max(0, n * h))^p$。其中$ h = \frac{l + e(view)}{|l + e(view)|}$, p一般选100～200(此处我们用specular map得到p)
+   3. ambient = constant
+   4. $final model = color[i] (即K) * (coef*diffuse + coef*specular + ambient)$; 一般diff+specular+ambient = 1？ 但是本project中ambient选了5，且不乘color[i]
+5. 学习渲染管线：
+   1. 
+6. 跳过了Phong Shading
 
 ### 难题：
 1. Phong Shading与Gouraud Shading的区别？之前用的intensity的插值方式究竟是Phong shading还是Gouraud shading？
    1. Phong Shading: 在vertex shader求出每个顶点的法线，然后fragment shader为法线插值，然后用得到的点P的法线求intensity。效果如下图：
    ![Phong Shading](LESSON/img/PhongShading.png)
-   2. Gouraud Shading
+   2. Gouraud Shading：在vertex shader中求出每个顶点的颜色（或者intensity），然后fragment shader只需为intensity插值（甚至可以直接在vertex shader里插值完后传给fragment shader），然后返回颜色
 2. 更改后的geometry该怎么用？
 
 ## Lesson 6bis: tangent space normal mapping

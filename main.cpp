@@ -12,7 +12,7 @@ const TGAColor red   = TGAColor(255, 0,   0,   255);
 const TGAColor green = TGAColor(0,   255, 128, 255);
 
 Model* model = nullptr;
-Vec3f light_dir = Vec3f(1., -1., 1.).normalize();   //定义光源的位置（用于shadowing）
+Vec3f light_dir = Vec3f(1., 1., 1.).normalize();   //定义光源的位置（用于shadowing）
 Vec3f eye(1, 1, 3);
 Vec3f center(0, 0, 0);
 Vec3f up(0, 1, 0);
@@ -22,7 +22,8 @@ const int Width  = 800;
 const char *fileName = "obj/african_head.obj";
 
 struct GouraudShader : public IShader{
-    Vec3f varyingIntensity;
+    mat<4,4,float> uniform_M;
+    mat<4,4,float> uniform_M_invTrans;
     mat<2,3,float> varyingUV;
 
     //Vec4f vertex(int iface, int nthvert)函数会返回齐次坐标系下的screenCoord。
@@ -30,17 +31,27 @@ struct GouraudShader : public IShader{
         Vec4f worldCoord = embed<4>(model->vert(iface, nthvert)); //从obj文件中取得vertex的坐标，并在w补上1使其成为齐次坐标。
         Vec4f screenCoord = Viewport * Projection * ModelView * worldCoord; //把worldCoord变成screenCoord
         
-        varyingIntensity[nthvert] = model->normal(iface, nthvert) * light_dir;
         varyingUV.set_col(nthvert, model->uv(iface, nthvert));
         return screenCoord;
     }
 
     virtual bool fragment(Vec3f baryCoord, TGAColor & color){
-        float intensity = varyingIntensity * baryCoord; //Gouraud shading中的点P的intensity是根据三个vertex的intensity插值得到的，而非flat shading中根据三角形平面的法线与intensity的值得到
+        //float intensity = varyingIntensity * baryCoord; //Gouraud shading中的点P的intensity是根据三个vertex的intensity插值得到的，而非flat shading中根据三角形平面的法线与intensity的值得到
         Vec2f uv = varyingUV * baryCoord;   //2X3 matrix * 3X1 vector = 2X1 vector
+        Vec3f n = proj<3>(uniform_M_invTrans * embed<4>(model->normal(uv))).normalize();    //model->normal()会返回法线贴图中(u,v)对应位置的(r,g,b)
+        Vec3f l = proj<3>(uniform_M * embed<4>(light_dir)).normalize();
+        Vec3f r = (n*(n*l*2.f) - l).normalize();   // reflected light
         
-        color = model->diffuse(uv)*intensity;   //get texture color data
+        Vec3f v = proj<3>(uniform_M * embed<4>(eye)).normalize();
+        float diff  = max(0.f, n*l);
+        float spec = pow(max(0.f, v * r), model->specular(uv));
+        float ambi = 5.f;
+        //Vec3f h = (v + l).normalize();
+        //float spec = pow(max(0.f, h * n), model->specular(uv));
+        
+        TGAColor c = model->diffuse(uv) * diff;   //get texture color data
 
+        for(int i = 0; i < 3; i++) color[i] = min<float>(ambi +  c[i]*(diff + .6*spec), 255);
         return false;   //false表示不要忽略这一个pixel
     }
 };
@@ -75,6 +86,8 @@ int main(int argc, char** argv){
     // getProjection(fovyRad, Width/Height, 1.0f, 10.0f);
 
     GouraudShader shader;
+    shader.uniform_M   =  Projection*ModelView;
+    shader.uniform_M_invTrans = (Projection*ModelView).invert_transpose();
     for(int i = 0; i < model->nfaces(); i++){  
         Vec4f screenCoords[3];
         for(int j = 0; j < 3; j++){
@@ -84,7 +97,7 @@ int main(int argc, char** argv){
     }
 
     image.flip_vertically(); // i want to have the origin at the left bottom corner of the image
-    image.write_tga_file("./output/L6_outputTexture.tga");
+    image.write_tga_file("./output/L6_outputTexture2Phong.tga");
 
 
     
@@ -94,7 +107,7 @@ int main(int argc, char** argv){
         }
     }
     zbimage.flip_vertically(); // i want to have the origin at the left bottom corner of the image
-    zbimage.write_tga_file("./output/L6_zbuffer.tga");
+    zbimage.write_tga_file("./output/L6_zbuffer2.tga");
     delete model;
     delete []zbuffer;
     return 0;
