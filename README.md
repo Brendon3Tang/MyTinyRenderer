@@ -201,7 +201,9 @@ for(int k = 0; k < 3; k++){
    3. ambient = constant
    4. $final model = color[i] (即K) * (coef*diffuse + coef*specular + ambient)$; 一般diff+specular+ambient = 1？ 但是本project中ambient选了5，且不乘color[i]
 5. 学习渲染管线：
-   1. 
+   1. OpenGL 2 渲染管线如下图：In newer versions of OpenGL there are other shaders, allowing, for example, to generate geometry on the fly.
+   - ![pipeline](LESSON/img/Pipeline.png)
+   2. in the above image all the stages we can not touch are shown in blue, whereas our callbacks are shown in orange. In fact, our main() function - is the primitive processing routine. It calls the vertex shader. We do not have primitive assembly here, since we are drawing dumb triangles only (in our code it is merged with the primitive processing). triangle() function - is the rasterizer, for each point inside the triangle it calls the fragment shader, then performs depth checks (z-buffer) and such.
 6. 跳过了Phong Shading
 
 ### 难题：
