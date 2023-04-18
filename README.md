@@ -3,6 +3,10 @@
 1. 使用重心坐标公式得不出需要的结果：没有注意int与float直接的互换。输入的三角形点坐标是int，但是重心坐标是float。
 
 ## Lesson 2
+### 课程总结：
+1. 插值，barycentric
+### 问题总结：
+1. 改写了他的barycentric，使用新的
 
 ## Lesson 3 Z-Buffer & Texture Mapping
 ### 课程总结：
@@ -148,8 +152,37 @@ for(int k = 0; k < 3; k++){
       x[2] & y[2] & z[2] & eye[2]\\
       0 & 0 & 0 & 1\\
    \end{bmatrix}$,我们返回$M.inverse()$
+### 难题：
+1. 怎么求出$r = -\frac{1}{c}$ 
+2. 怎么确定fovy（$\theta$），aspect，near，far的值
+
 
 ## Lesson 5 Moving the camera
 ### 主要内容：
-1. 计算ModelView变换矩阵
-2. 计算ViewPort变换矩阵
+1. Gouraud shading：
+   1. Gouraud shading中的点P的intensity是根据三个vertex的intensity的插值得到的。vertex的intensity = vertex normal vector * light_dir.normal
+   2. flat shading中整个三角形的intensity = 三角形的normal vector * light_dir.normal
+2. 计算ModelView变换矩阵
+3. 计算ViewPort变换矩阵
+
+
+## Lesson 6: Shaders for the software renderer
+### 主要内容：
+1. 完善项目构架：
+   1. vertex shader
+      1. 用于取得顶点坐标，并转化为screenCoords
+      2. 用于取得每个顶点的intensity、对应的纹理坐标(u,v)
+   2. fragment shader
+      1. 用于处理插值（得到P点的intensity，纹理坐标），并取得颜色数据
+2. 学习渲染管线
+3. 跳过了Phong Shading
+4. Normal Mapping：
+   1. **normal texture是五颜六色的，因为每个位置点P(u,v)的RGB值(r, g, b)用来表示这个点P的normal的(x, y, z)。**
+   2. global (Cartesian) coordinate system VS. Darboux frame (so-called tangent space)
+
+## Lesson 6bis: tangent space normal mapping
+### 主要内容：
+1. normal mapping：
+   1. Normal Mapping VS. Phong shading：Key Difference： the density of information we have
+      1. Phong shading we use normal vectors given per vertex of triangle mesh (and interpolate it inside triangles)。
+      2. Normal mapping textures provide dense information, dramatically improving rendering details
