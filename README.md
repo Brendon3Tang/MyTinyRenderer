@@ -160,7 +160,7 @@ for(int k = 0; k < 3; k++){
 ## Lesson 5 Moving the camera
 ### 主要内容：
 1. Gouraud shading：
-   1. Gouraud shading中的点P的intensity是根据三个vertex的intensity的插值得到的。vertex的intensity = vertex normal vector * light_dir.normal
+   1. Gouraud shading中的点P对应的纹理坐标(u,v)的intensity是根据三个vertex的intensity的插值得到的。vertex的intensity = vertex normal vector * light_dir.normal
    2. flat shading中整个三角形的intensity = 三角形的normal vector * light_dir.normal
 2. 计算ModelView变换矩阵
 3. 计算ViewPort变换矩阵
@@ -173,12 +173,22 @@ for(int k = 0; k < 3; k++){
       1. 用于取得顶点坐标，并转化为screenCoords
       2. 用于取得每个顶点的intensity、对应的纹理坐标(u,v)
    2. fragment shader
-      1. 用于处理插值（得到P点的intensity，纹理坐标），并取得颜色数据
+      1. 用于处理插值（得到 P点对应的纹理坐标(u,v)的intensity，纹理坐标），并取得颜色数据
 2. 学习渲染管线
 3. 跳过了Phong Shading
 4. Normal Mapping：
    1. **normal texture是五颜六色的，因为每个位置点P(u,v)的RGB值(r, g, b)用来表示这个点P的normal的(x, y, z)。**
-   2. global (Cartesian) coordinate system VS. Darboux frame (so-called tangent space)
+   2. Normal Mapping不再需要为intensity插值了，而是直接得到每个pixel的normal vector，然后把它和light均仿射变换（affine mapping）后求出放射变换后的intensity，他即使该纹理坐标(u,v)的intensity
+   3. global (Cartesian) coordinate system VS. Darboux frame (so-called tangent space)（6bis中学习）
+   4. normal mapping需要用到**Transformation of normal vectors**：
+      - 如果一个模型和他的法线都被定义在了obj file里，当我们需要用affine mapping来变换这个obj时，假设我们使用的是矩阵 M ，那么要变换这个obj的法线，我们需要使用的矩阵是$(M^{-1})^{T}$，即 M.inverse.transpose。
+
+### 难题：
+1. Phong Shading与Gouraud Shading的区别？之前用的intensity的插值方式究竟是Phong shading还是Gouraud shading？
+   1. Phong Shading: 在vertex shader求出每个顶点的法线，然后fragment shader为法线插值，然后用得到的点P的法线求intensity。效果如下图：
+   ![Phong Shading](LESSON/img/PhongShading.png)
+   2. Gouraud Shading
+2. 更改后的geometry该怎么用？
 
 ## Lesson 6bis: tangent space normal mapping
 ### 主要内容：
