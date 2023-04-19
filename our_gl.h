@@ -7,6 +7,7 @@
 extern Matrix ModelView;
 extern Matrix Projection;
 extern Matrix Viewport;
+const float depth = 2000.f;
 
 void viewport(int x, int y, int w, int h);
 void viewport(int x, int y);  //

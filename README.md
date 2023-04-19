@@ -219,3 +219,21 @@ for(int k = 0; k < 3; k++){
    1. Normal Mapping VS. Phong shading：Key Difference： the density of information we have
       1. Phong shading we use normal vectors given per vertex of triangle mesh (and interpolate it inside triangles)。
       2. Normal mapping textures provide dense information, dramatically improving rendering details
+
+## Lesson 7: Shadow mapping
+### 主要内容：
+1. hard shadow：
+   1. 做两次rendering：
+      1. 第一次render把相机放在光源的位置，并把深度存放在shadow buffer中；此时的ModelView中的eye被替换为了light_dir，projection中的$ \frac{-1.f}{eye-center}$被替换为了0。
+      2. 第二次render时把相机放在正常的位置上，新增一个uniform_Mshadow把这一次render中pixel的点坐标screenCoordCurr转换为上一次以光源为相机位置时pixel的点坐标screenCoordLight，（uniform_Mshadow的推导过程看下面)。然后比较screenCoordLight.z 与 shadowBuffer[screenCoordLight.x][screenCoordLight.y]，如果screenCoordLight.z大于shadowBuffer中的z值，说明当前物体离摄像头更近。我们返回shadow 值 1，即无shadow（最终的``color[i] = std::min<float>(20 + c[i]*shadow*(1.2*diff + .6*spec), 255)``。shadow对运算结果没有影响）, 否则返回shadow值0.3（即有shadow）：`` float shadow = .3+.7*(shadowbuffer[screenCoordLight.x][screenCoordLight.y] < creenCoordLight[2]);``。
+         - 要得到uniform_Mshadow矩阵，首先保存之前在把相机放在光源上时得到的变换矩阵 $M_{shadow}$ = (Viewport_l * Projection_l * ModelView_l)。
+         - 然后得到当前render的变换矩阵 $M_{Tran}$ = (Viewport * Projection * ModelView)。
+         - 已知$M_{Tran}$可以把worldCoord变成当前相机位置下的screenCoord，那么$M_{Tran}^{-1}$就可以把screenCoord再变回worldCoord，此时再apply M_shadow就可以把worldCoord变成以光源为相机位置时的screenCoord。
+2. z-fighting: 有时候由于两个物品的z值相差太小，距离太过接近，因此数据精度无法区分他们，从而导致两个物体z值计算错误
+   - resolution: brute force solutions, 直接在比较的时候+43.34 ``float shadow = .3+.7*(shadowbuffer[idx]<sb_p[2]+43.34); // magic coeff to avoid z-fighting``
+
+### 问题：
+1. shadowbuffer的二维表示会导致segment fault：由于在main里定义了local的shadowBuffer，所以fragment里的shadowBuffer是空的
+2. 为什么screenCoordLight.z大于shadowBuffer中的z值表示没有阴影，不是应该说明当前物体被更近的物体挡住了，我们返回shadow吗：
+   - 不，如果screenCoordLight.z大于shadowBuffer中的z值，说明当前物体离摄像头更近。我们返回shadow 值 1（参考Lesson 3）
+3. 阴影不完整是否是因为之前depth对不上

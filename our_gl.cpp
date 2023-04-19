@@ -13,11 +13,11 @@ void viewport(int x, int y, int w, int h){
     Viewport = Matrix::identity();
     Viewport[0][3] = x+w/2.f;
     Viewport[1][3] = y+h/2.f;
-    Viewport[2][3] = 255.f/2.f;
+    Viewport[2][3] = depth/2.f;
 
     Viewport[0][0] = w/2.f;
     Viewport[1][1] = h/2.f;
-    Viewport[2][2] = 255.f/2.f;
+    Viewport[2][2] = depth/2.f;
 }
 
 //101 formula
@@ -25,11 +25,11 @@ void viewport(int x, int y){
     Viewport = Matrix::identity();
     Viewport[0][3] = x/2.f;
     Viewport[1][3] = y/2.f;
-    Viewport[2][3] = 255.f/2.f;
+    Viewport[2][3] = depth/2.f;
 
     Viewport[0][0] = x/2.f;
     Viewport[1][1] = y/2.f;
-    Viewport[2][2] = 255.f/2.f;
+    Viewport[2][2] = depth/2.f;
 }
 
 void lookat(Vec3f eye, Vec3f center, Vec3f up){
@@ -143,10 +143,12 @@ void triangle(Vec4f *pts, /*Vec2f *uv,*/ IShader &shader, TGAImage &image, float
                     P.z += pts[k].z * baryCoord[k];
                     P.w += pts[k].w * baryCoord[k];
                 }
-                // 注意z不一定需要反齐次化，两种情况都可以，之时出来的buffer颜色不同
-                if (zbuffer[(int)P.x][(int)P.y] < int(P.z) /*int(P.z/P.w + 0.5f)*/) {
-                    zbuffer[(int)P.x][(int)P.y] = int(P.z) /*int(P.z/P.w + 0.5f)*/;
-                    
+                
+                // 注意z不一定需要反齐次化，两种情况都可以，只是出来的buffer颜色不同
+                if (zbuffer[(int)P.x][(int)P.y] < int(P.z/P.w) /*int(P.z/P.w + 0.5f)*/) {
+                    zbuffer[(int)P.x][(int)P.y] = int(P.z/P.w) /*int(P.z/P.w + 0.5f)*/;
+                // if (zbuffer[(int)P.x+(int)P.y*image.get_width()] < int(P.z/P.w) /*int(P.z/P.w + 0.5f)*/) {
+                //     zbuffer[(int)P.x+(int)P.y*image.get_width()] = int(P.z/P.w) /*int(P.z/P.w + 0.5f)*/;
                     bool discard = shader.fragment(baryCoord, color);
                     if (!discard) {
                         image.set(P.x, P.y, color);
