@@ -236,4 +236,10 @@ for(int k = 0; k < 3; k++){
 1. shadowbuffer的二维表示会导致segment fault：由于在main里定义了local的shadowBuffer，所以fragment里的shadowBuffer是空的
 2. 为什么screenCoordLight.z大于shadowBuffer中的z值表示没有阴影，不是应该说明当前物体被更近的物体挡住了，我们返回shadow吗：
    - 不，如果screenCoordLight.z大于shadowBuffer中的z值，说明当前物体离摄像头更近。我们返回shadow 值 1（参考Lesson 3）
-3. 阴影不完整是否是因为之前depth对不上
+3. 阴影不完整是因为之前depth对不上（getModelView中的depth是255，而DepthShader.fragment中的depth用的是2000）
+
+## Lesson 8: Ambient occlusion
+### 主要内容：
+1. Ambient occlusion：
+   1. 之前的课程中，我们只使用了局部光照，即对于当前pixel的ambient光照我们不考虑他邻居物体的影响
+   2. **为什么ambient intensity要选择常数？**
