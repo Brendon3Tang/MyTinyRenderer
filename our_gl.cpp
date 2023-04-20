@@ -115,7 +115,6 @@ Vec3f barycentric(Vec2f *pts, Vec2f P){
     return Vec3f(alpha, beta, gamma);
 }
 
-// Gouraud Shading
 void triangle(Vec4f *pts, /*Vec2f *uv,*/ IShader &shader, TGAImage &image, float **zbuffer){
     //对于每个三角形，我们会在屏幕内找到最小的能够把它包裹起来的box，然后在这个box内部进行shading（提高效率）
     Vec2f miniBound(image.get_width()-1, image.get_height()-1);
@@ -158,3 +157,36 @@ void triangle(Vec4f *pts, /*Vec2f *uv,*/ IShader &shader, TGAImage &image, float
         }
     }
 }
+
+// void triangle(mat<4,3,float> &clipc, IShader &shader, TGAImage &image, float *zbuffer) {
+//     mat<3,4,float> pts  = (Viewport*clipc).transpose(); // transposed to ease access to each of the points
+//     mat<3,2,float> pts2;
+//     for (int i=0; i<3; i++) pts2[i] = proj<2>(pts[i]/pts[i][3]);
+
+//     Vec2f bboxmin( std::numeric_limits<float>::max(),  std::numeric_limits<float>::max());
+//     Vec2f bboxmax(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
+//     Vec2f clamp(image.get_width()-1, image.get_height()-1);
+//     for (int i=0; i<3; i++) {
+//         for (int j=0; j<2; j++) {
+//             bboxmin[j] = std::max(0.f,      std::min(bboxmin[j], pts2[i][j]));
+//             bboxmax[j] = std::min(clamp[j], std::max(bboxmax[j], pts2[i][j]));
+//         }
+//     }
+//     Vec2i P;
+//     TGAColor color;
+//     for (P.x=bboxmin.x; P.x<=bboxmax.x; P.x++) {
+//         for (P.y=bboxmin.y; P.y<=bboxmax.y; P.y++) {
+//             Vec2f projP[3] = {pts2[0], pts2[1], pts2[2]};
+//             Vec3f bc_screen  = barycentric(projP, P);
+//             Vec3f bc_clip    = Vec3f(bc_screen.x/pts[0][3], bc_screen.y/pts[1][3], bc_screen.z/pts[2][3]);
+//             bc_clip = bc_clip/(bc_clip.x+bc_clip.y+bc_clip.z);
+//             float frag_depth = clipc[2]*bc_clip;
+//             if (bc_screen.x<0 || bc_screen.y<0 || bc_screen.z<0 || zbuffer[P.x+P.y*image.get_width()]>frag_depth) continue;
+//             bool discard = shader.fragment(bc_clip, color);
+//             if (!discard) {
+//                 zbuffer[P.x+P.y*image.get_width()] = frag_depth;
+//                 image.set(P.x, P.y, color);
+//             }
+//         }
+//     }
+// }
