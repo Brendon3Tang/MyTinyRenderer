@@ -63,7 +63,7 @@ struct GouraudShader : public IShader{
     }
 };
 
-struct NormalShader : public IShader{
+struct BumpMappingShader : public IShader{
     mat<4,4,float> uniform_M;
     mat<4,4,float> uniform_M_invTrans;
     mat<4,4,float> uniform_M_shadow;
@@ -77,7 +77,7 @@ struct NormalShader : public IShader{
     //test end
 
     //constructor
-    NormalShader(Matrix M, Matrix M_invTrans, Matrix M_shadow) : uniform_M(M), uniform_M_invTrans(M_invTrans), uniform_M_shadow(M_shadow), varyingTri(), varyingUV(){}
+    BumpMappingShader(Matrix M, Matrix M_invTrans, Matrix M_shadow) : uniform_M(M), uniform_M_invTrans(M_invTrans), uniform_M_shadow(M_shadow), varyingTri(), varyingUV(){}
 
     //Vec4f vertex(int iface, int nthvert)函数会返回齐次坐标系下的screenCoord。
     virtual Vec4f vertex(int iface, int nthvert){ //vertex Shader
@@ -95,6 +95,7 @@ struct NormalShader : public IShader{
     }
 
     virtual bool fragment(Vec3f bcScreen, Vec3f bcClip, TGAColor & color){
+        //使用bcScreen求出P', 并将P'.z与shadowBuffer比较，画出阴影
         Vec4f pPrime = uniform_M_shadow * embed<4>(varyingTri * bcScreen);
         pPrime = pPrime/pPrime.w;
         
@@ -104,7 +105,9 @@ struct NormalShader : public IShader{
         pPrime.y = max(0, (int)pPrime.y);
         float fragment_depth = pPrime.z;
         float shadow = 0.3 + 0.7 * (fragment_depth + 43.34 > shadowBuffer[(int)pPrime.x][(int)pPrime.y]);
+        
 
+        //为了保证画面不会因为perspective transformation而导致扭曲，一定要使用bcClip求出normal，uv，之后开始shading
         Vec3f bn = (varying_nrm*bcClip).normalize();
         Vec2f uv = varyingUV*bcClip;
 
@@ -129,6 +132,7 @@ struct NormalShader : public IShader{
         float spec = pow(max(v * r, 0.f), model->specular(uv));
         TGAColor c = model->diffuse(uv);
         for(int i = 0; i < 3; i++) color[i] = min<float>(10 +  c[i]*shadow*(1.2*diff + 0.6*spec), 255);
+        
         return false;
     }
 };
@@ -191,23 +195,23 @@ int main(int argc, char** argv){
             // getProjection(fovyRad, Width/Height, 1.0f, 10.0f);
             
 
-            NormalShader normalShader(Projection * ModelView, (Projection * ModelView).invert_transpose(), M_shadow * (Viewport*Projection*ModelView).invert());
+            BumpMappingShader bumpShader(Projection * ModelView, (Projection * ModelView).invert_transpose(), M_shadow * (Viewport*Projection*ModelView).invert());
             for(int i = 0; i < model->nfaces(); i++){  
                 Vec4f screenCoords[3];
                 for(int j = 0; j < 3; j++){
-                    screenCoords[j] = normalShader.vertex(i,j);
+                    screenCoords[j] = bumpShader.vertex(i,j);
                 }
-                triangle(screenCoords, normalShader, image, zbuffer);
+                triangle(screenCoords, bumpShader, image, zbuffer);
             }
         }
         delete model;
     }
 
     zbimage.flip_vertically(); // i want to have the origin at the left bottom corner of the image
-    zbimage.write_tga_file("./output/L7_zbuffer2-b.tga");
+    zbimage.write_tga_file("./output/L7_zbuffer-b.tga");
     
     image.flip_vertically(); // i want to have the origin at the left bottom corner of the image
-    image.write_tga_file("./output/L7_outputShadow2-b.tga");
+    image.write_tga_file("./output/L7_outputShadow-b.tga");
     delete []shadowBuffer;
     delete []zbuffer;
     return 0;
