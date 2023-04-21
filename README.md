@@ -248,11 +248,17 @@ for(int k = 0; k < 3; k++){
 1. 待补充.
 ![linear interpolation with perspective deformations](LESSON/img/linear%20interpolation%20with%20perspective%20deformations.png)
 
-## 对项目的修改/问题：
+## 对项目的修改、问题总结：
 1. 没有采用tangent normal mapping，使用常规的normal mapping
 2. 使用了二维array
 3. 修改了barycentric的写法，更贴近games101
-4. 在做了perspective deformation之后无法加shadow mapping了（已解决，已pull request）
+4. 要弄清楚项目中的Viewport、Projection、ModelView是如何推导的。Viewport与101可以互换，但是剩下两个不行。Projection和ModelView相机位置摆在了(0,0,-c)而非(0,0,0)，这也导致了一些重要变化。
+5. 为什么要使用两个不同的zbuffer? 
+   1. 第一个zbuffer：shadowBuffer是记录从光源开始到物体的距离，记录物体的z，物体的z越大，物体离光源越近。最后shadowbuffer会每个保留每个pixel离光源最近的物体的距离。
+   2. 第二个zbuffer：zBuffer是记录当前从摄像机开始到物体的距离，记录物体的z，物体的z越大，物体离摄像姐越近。最后zBuffer会每个保留每个pixel离摄像机最近的物体的距离。
+   3. 要shadowBuffer是为了在第二次渲染（第一次渲染是为了得到shadowBuffer）时，比较当前pixel的物体离光源的距离，如果当前pixel的物体的y比shadwoBuffer保存的z更大或相等（一般是更大的时候，因为有offset，），那么说明该物体就是离光源最近的，他不需要阴影；而要zBuffer则是在triangle()中发挥作用，他是为了保证当前这个pixel的物体是处在离摄像机最近的地方(即他的z值 > zBuffer保存的z)，只有此时他才会被画出来，否则不会被画出来（lesson3）
+   4. 总结：第一个zbuffer是为了阴影；第二个zbuffer是为了记录物体遮挡关系。
+6. 在做了perspective deformation之后无法加shadow mapping了（已解决，已pull request）
    - 可能的原因：
       My own thought about this problem is that we used the z-value of the original P, but the index (x+y*width) of the shadowBuffer for that z-value comes from the P', (original P after the MVP transformation). So, the pixel doesn't match the z-value.
    - 我的解决方案：
@@ -263,8 +269,11 @@ for(int k = 0; k < 3; k++){
       In the DepthShader, I did almost the same thing as in Lesson 7 (but I tried to save the vertices after MVP into the varying_tri instead of the vertices after VP, while the vertex shader still returned the vertices after VP transformation to the main function).
       <br/>
       Then in the Shader, I used "bc_screen" and varying_tri (still, it saved the vertices after MVP) to calculate the (x', y', z') of P'。 And use the (x', y') to get the index to access the shadowBuffer, and compared it with z'。After that, I used "bc_clip" to do whatever we should do to calculate uv, n, and other stuff.
+7. 锯齿比较严重
+8. 一开始只是想练习一下，使用C++的动态二维数组。复习了一下他的定义方式，这之后经常导致segment fault，原因是没有注意bound。比如当贴图（地板贴图）超出了屏幕(800x800)时，他就会报错。后来就是简单的筛选一下，把超出部分化成0/800就行
 
 ## 未完成部分：
-1. Lesson 6B：Tangent Basis Normal Mapping
-2. Lesson 8
-3. 我自己写的Projection和ModelView不能用
+1. Lesson 6B：Tangent Basis Normal Mapping (bump mapping)
+2. Lesson 8 (precomputation)
+3. 我自己写的Projection和ModelView不能用。其实在lesson 6重构之前可以用，lesson 6之后作者修改了矩阵的接口，把invert改了一下，就不能用了。我尝试过用它旧的geometry里的逻辑重写invert，但是不能用。后来由于时间原因以及我的线性代数并没有这么熟练，就没有深入研究了。
+
