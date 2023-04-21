@@ -57,7 +57,6 @@ void getModelView(Vec3f eye, Vec3f center, Vec3f up){
         ModelView[i][3] = eye[i];
     }
     ModelView[3][3] = 1.f;
-    // return C.inverse();
     ModelView = ModelView.invert();
 }
 
@@ -99,7 +98,7 @@ void projection(float coeff){
 }
 
 //new method: 用 barycentric画:
-// barycentric会用重心坐标判断点P是否在由pts0,pts1,pts2三个顶点组成的三角形内，如果是就返回true，否则返回false
+//barycentric会用重心坐标判断点P是否在由pts0,pts1,pts2三个顶点组成的三角形内，如果是就返回true，否则返回false
 Vec3f barycentric(Vec2f *pts, Vec2f P){
     Vec2f A = pts[0];
     Vec2f B = pts[1];
@@ -115,78 +114,42 @@ Vec3f barycentric(Vec2f *pts, Vec2f P){
     return Vec3f(alpha, beta, gamma);
 }
 
-void triangle(Vec4f *pts, /*Vec2f *uv,*/ IShader &shader, TGAImage &image, float **zbuffer){
-    //对于每个三角形，我们会在屏幕内找到最小的能够把它包裹起来的box，然后在这个box内部进行shading（提高效率）
+void triangle(Vec4f *pts, IShader &shader, TGAImage &image, float **zbuffer){
+    Vec4f ptsPrimeHomo[3] = {Viewport * pts[0], Viewport * pts[1], Viewport * pts[2]};  //经过MVP变换后三个顶点的screenCoord，齐次坐标系
+    Vec3f ptsPrimeAffine[3] = {proj<3>(ptsPrimeHomo[0]/ptsPrimeHomo[0].w), proj<3>(ptsPrimeHomo[1]/ptsPrimeHomo[1].w), proj<3>(ptsPrimeHomo[2]/ptsPrimeHomo[2].w)};   //得到MVP后三个顶点的screenCoord，仿射坐标系
+
     Vec2f miniBound(image.get_width()-1, image.get_height()-1);
     Vec2f maxBound(0,0);
 
     //遍历三角形的三个顶点，找到每个三角形的最高点与最低点，最左点与最右点，这个三角形一定在这个box内
     for(int i = 0; i < 3; i++){
-        miniBound.x = max(0.f, min(miniBound.x, pts[i].x/pts[i].w));
-        miniBound.y = max(0.f, min(miniBound.y, pts[i].y/pts[i].w));
+        miniBound.x = max(0.f, min(miniBound.x, ptsPrimeAffine[i].x));
+        miniBound.y = max(0.f, min(miniBound.y, ptsPrimeAffine[i].y));
 
-        maxBound.x = min((float)image.get_width()-1, max(maxBound.x, pts[i].x/pts[i].w));
-        maxBound.y = min((float)image.get_height()-1, max(maxBound.y, pts[i].y/pts[i].w));
+        maxBound.x = min((float)image.get_width()-1, max(maxBound.x, ptsPrimeAffine[i].x));
+        maxBound.y = min((float)image.get_height()-1, max(maxBound.y, ptsPrimeAffine[i].y));
     }
 
-    Vec4f P;
+    Vec2i scP;  //scP stands for screenCoords of point P ( = P after MVP = P')，由于baryCentric只需要(x,y)，所以我们只用Vec2i
     TGAColor color;
     for (int i=miniBound.x; i <= maxBound.x; i++) {
         for (int j =miniBound.y; j <=maxBound.y; j++) {
-            P = Vec4f(i, j, 0, 0); //取得当前点P的
-            Vec2f projPts[3] = {proj<2>(pts[0]/pts[0].w), proj<2>(pts[1]/pts[1].w), proj<2>(pts[2]/pts[2].w)};  //把每个顶点的齐次坐标反齐次化然后投射回2D，只保留x，y
-            Vec3f baryCoord = barycentric(projPts, proj<2>(P));//用三个顶点和点P求点P的重心坐标
-            if(baryCoord.x >= 0.0f && baryCoord.y >= 0.f && baryCoord.z >= 0.f){
-                //插值求点P的z值，用于深度测试。
-                for(int k = 0; k < 3; k++){
-                    P.z += pts[k].z * baryCoord[k];
-                    P.w += pts[k].w * baryCoord[k];
-                }
-                
-                // 注意z不一定需要反齐次化，两种情况都可以，只是出来的buffer颜色不同
-                if (zbuffer[(int)P.x][(int)P.y] < int(P.z/P.w) /*int(P.z/P.w + 0.5f)*/) {
-                    zbuffer[(int)P.x][(int)P.y] = int(P.z/P.w) /*int(P.z/P.w + 0.5f)*/;
-                // if (zbuffer[(int)P.x+(int)P.y*image.get_width()] < int(P.z/P.w) /*int(P.z/P.w + 0.5f)*/) {
-                //     zbuffer[(int)P.x+(int)P.y*image.get_width()] = int(P.z/P.w) /*int(P.z/P.w + 0.5f)*/;
-                    bool discard = shader.fragment(baryCoord, color);
-                    if (!discard) {
-                        image.set(P.x, P.y, color);
-                    }
-                }
+            scP = Vec2i(i, j); //取得当前点P’的经过MVP后的仿射坐标（因为i ， j是根据pts得到的）
+            Vec2f projPts2[3] = {proj<2>(ptsPrimeAffine[0]), proj<2>(ptsPrimeAffine[1]), proj<2>(ptsPrimeAffine[2])};  //把经过MVP后的每个顶点的仿射坐标x，y传入baryCentric
+            Vec3f bcScreen = barycentric(projPts2, scP);//用经过MVP后的三个顶点和点P'求点P‘的重心坐标
+            Vec3f bcClip = Vec3f(bcScreen.x/pts[0].w, bcScreen.y/pts[1].w, bcScreen.z/pts[2].w);
+            bcClip = bcClip/(bcClip.x+bcClip.y+bcClip.z);   //反变换后，得到点P（未经过MVP变换）的重心坐标
+
+            float fragment_z = 0.f;
+            for(int k = 0; k < 3; k++){
+                fragment_z += ptsPrimeAffine[k].z * bcScreen[k];
+            }
+            if(bcScreen.x < 0.0f || bcScreen.y < 0.f || bcScreen.z < 0.f || zbuffer[scP.x][scP.y] > fragment_z) continue;
+            bool discard = shader.fragment(bcScreen, bcClip, color);
+            if (!discard) {
+                zbuffer[scP.x][scP.y] = fragment_z;
+                image.set(scP.x, scP.y, color);
             }
         }
     }
 }
-
-// void triangle(mat<4,3,float> &clipc, IShader &shader, TGAImage &image, float *zbuffer) {
-//     mat<3,4,float> pts  = (Viewport*clipc).transpose(); // transposed to ease access to each of the points
-//     mat<3,2,float> pts2;
-//     for (int i=0; i<3; i++) pts2[i] = proj<2>(pts[i]/pts[i][3]);
-
-//     Vec2f bboxmin( std::numeric_limits<float>::max(),  std::numeric_limits<float>::max());
-//     Vec2f bboxmax(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
-//     Vec2f clamp(image.get_width()-1, image.get_height()-1);
-//     for (int i=0; i<3; i++) {
-//         for (int j=0; j<2; j++) {
-//             bboxmin[j] = std::max(0.f,      std::min(bboxmin[j], pts2[i][j]));
-//             bboxmax[j] = std::min(clamp[j], std::max(bboxmax[j], pts2[i][j]));
-//         }
-//     }
-//     Vec2i P;
-//     TGAColor color;
-//     for (P.x=bboxmin.x; P.x<=bboxmax.x; P.x++) {
-//         for (P.y=bboxmin.y; P.y<=bboxmax.y; P.y++) {
-//             Vec2f projP[3] = {pts2[0], pts2[1], pts2[2]};
-//             Vec3f bc_screen  = barycentric(projP, P);
-//             Vec3f bc_clip    = Vec3f(bc_screen.x/pts[0][3], bc_screen.y/pts[1][3], bc_screen.z/pts[2][3]);
-//             bc_clip = bc_clip/(bc_clip.x+bc_clip.y+bc_clip.z);
-//             float frag_depth = clipc[2]*bc_clip;
-//             if (bc_screen.x<0 || bc_screen.y<0 || bc_screen.z<0 || zbuffer[P.x+P.y*image.get_width()]>frag_depth) continue;
-//             bool discard = shader.fragment(bc_clip, color);
-//             if (!discard) {
-//                 zbuffer[P.x+P.y*image.get_width()] = frag_depth;
-//                 image.set(P.x, P.y, color);
-//             }
-//         }
-//     }
-// }

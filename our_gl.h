@@ -19,9 +19,8 @@ void projection(float coeff=0.f); // coeff = -1/c
 struct IShader {
     virtual ~IShader();
     virtual Vec4f vertex(int iface, int nthvert) = 0;
-    virtual bool fragment(Vec3f bar, TGAColor &color) = 0;
+    virtual bool fragment(Vec3f bcScreen, Vec3f bcClip, TGAColor &color) = 0;
 };
 
 void triangle(Vec4f *pts, IShader &shader, TGAImage &image, float **zbuffer);
-//void triangle(mat<4,3,float> &clipc, IShader &shader, TGAImage &image, float *zbuffer);
 #endif //__OUR_GL_H__

@@ -243,3 +243,27 @@ for(int k = 0; k < 3; k++){
 1. Ambient occlusion：
    1. 之前的课程中，我们只使用了局部光照，即对于当前pixel的ambient光照我们不考虑他邻居物体的影响
    2. **为什么ambient intensity要选择常数？**
+
+## Technical difficulties: linear interpolation with perspective deformations
+1. ![linear interpolation with perspective deformations](LESSON/img/linear%20interpolation%20with%20perspective%20deformations.png)
+
+### 对项目的修改/问题：
+1. 没有采用tangent normal mapping，使用常规的normal mapping
+2. 使用了二维array
+3. 修改了barycentric的写法，更贴近games101
+4. 在做了perspective deformation之后无法加shadow mapping了（已解决，已pull request）
+   - 可能的原因：
+      My own thought about this problem is that we used the z-value of the original P, but the index (x+y*width) of the shadowBuffer for that z-value comes from the P', (original P after the MVP transformation). So, the pixel doesn't match the z-value.
+   - 我的解决方案：
+      I fixed this problem by passing both "bc_screen" and "bc_clip" into the fragment shader.
+      <br/>
+      In the triangle() of our_gl.cpp, I store the pts2.z as the fragment_depth instead of pts.z so that I can make sure that the z-value and the x-value & y-value in idx (x+y*width) come from the same point, P'. Now we make the index of the shadowBuffer in this pixel and the z-value of in this pixel consistent.
+      <br/>
+      In the DepthShader, I did almost the same thing as in Lesson 7 (but I tried to save the vertices after MVP into the varying_tri instead of the vertices after VP, while the vertex shader still returned the vertices after VP transformation to the main function).
+      <br/>
+      Then in the Shader, I used "bc_screen" and varying_tri (still, it saved the vertices after MVP) to calculate the (x', y', z') of P'。 And use the (x', y') to get the index to access the shadowBuffer, and compared it with z'。After that, I used "bc_clip" to do whatever we should do to calculate uv, n, and other stuff.
+
+## 未完成部分：
+1. Lesson 6B：Tangent Basis Normal Mapping
+2. Lesson 8
+3. 我自己写的Projection和ModelView不能用
