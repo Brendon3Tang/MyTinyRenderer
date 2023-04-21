@@ -245,9 +245,10 @@ for(int k = 0; k < 3; k++){
    2. **为什么ambient intensity要选择常数？**
 
 ## Technical difficulties: linear interpolation with perspective deformations
-1. ![linear interpolation with perspective deformations](LESSON/img/linear%20interpolation%20with%20perspective%20deformations.png)
+1. 待补充.
+![linear interpolation with perspective deformations](LESSON/img/linear%20interpolation%20with%20perspective%20deformations.png)
 
-### 对项目的修改/问题：
+## 对项目的修改/问题：
 1. 没有采用tangent normal mapping，使用常规的normal mapping
 2. 使用了二维array
 3. 修改了barycentric的写法，更贴近games101
